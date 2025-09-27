@@ -7,7 +7,7 @@ import ThumbnailList from './ThumbnailList';
 import OptionsPanel from './OptionsPanel';
 import ProgressBar from './ProgressBar';
 import { ImageFile, PDFOptions, ConversionResult } from '@/types';
-import { generatePDFClient, downloadPDF } from '@/lib/pdf-client';
+import { generatePDFClient } from '@/lib/pdf-client';
 import { calculateTotalSize, isClientMode, formatFileSize } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 

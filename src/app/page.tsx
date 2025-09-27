@@ -146,7 +146,7 @@ export default function Home() {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">What's the max file size?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">What&apos;s the max file size?</h3>
               <p className="text-gray-600">
                 Up to 25MB total for local processing, or 100MB for server processing. 
                 Individual images can be up to 10MB each.

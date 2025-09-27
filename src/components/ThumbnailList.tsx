@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React from 'react';
 import {
   DndContext,
   closestCenter,
@@ -76,6 +76,7 @@ function ThumbnailItem({ image, onRemove }: ThumbnailItemProps) {
       {/* Image Preview */}
       <div className="aspect-square bg-gray-100 flex items-center justify-center">
         {image.preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image.preview}
             alt={image.name}

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (error) {
-      if ((error as any).code !== 'ENOENT') {
+      if ((error as { code?: string }).code !== 'ENOENT') {
         throw error;
       }
       // Temp directory doesn't exist, which is fine

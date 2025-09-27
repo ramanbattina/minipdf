@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, AlertCircle } from 'lucide-react';
+import { Upload, AlertCircle } from 'lucide-react';
 import { ImageFile } from '@/types';
 import { validateImageFile, generateId } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -16,16 +16,16 @@ interface DropzoneProps {
 export default function Dropzone({ onFilesAdded, maxFiles = 20, disabled = false }: DropzoneProps) {
   const [errors, setErrors] = useState<string[]>([]);
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { file: File; errors: { code: string; message: string }[] }[]) => {
     setErrors([]);
     const newErrors: string[] = [];
     const validFiles: ImageFile[] = [];
 
     // Handle rejected files
     rejectedFiles.forEach(({ file, errors }) => {
-      if (errors.some((e: any) => e.code === 'file-too-large')) {
+      if (errors.some((e) => e.code === 'file-too-large')) {
         newErrors.push(`${file.name} is too large (max 10MB per file)`);
-      } else if (errors.some((e: any) => e.code === 'file-invalid-type')) {
+      } else if (errors.some((e) => e.code === 'file-invalid-type')) {
         newErrors.push(`${file.name} is not a valid image file`);
       } else {
         newErrors.push(`${file.name}: ${errors[0]?.message || 'Invalid file'}`);

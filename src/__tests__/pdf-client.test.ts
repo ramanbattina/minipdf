@@ -33,16 +33,16 @@ global.File = class MockFile {
     ]);
     return jpegData.buffer;
   }
-} as any;
+} as unknown as typeof File;
 
 global.Blob = class MockBlob {
-  constructor(public parts: any[], public options: any) {}
-} as any;
+  constructor(public parts: unknown[], public options: unknown) {}
+} as unknown as typeof Blob;
 
 describe('PDF Client Generation', () => {
   const createMockImageFile = (name: string, size: number = 1024): ImageFile => ({
     id: 'test-id',
-    file: new File(name, size, 'image/jpeg') as any,
+    file: new File(name, size, 'image/jpeg') as unknown as File,
     preview: 'data:image/jpeg;base64,test',
     name,
     size,

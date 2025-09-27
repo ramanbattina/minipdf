@@ -114,7 +114,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Limitation of Liability</h2>
               <p className="text-gray-600 mb-4">
-                MiniPDF is provided "as is" without warranties of any kind. We are not liable for:
+                MiniPDF is provided &quot;as is&quot; without warranties of any kind. We are not liable for:
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-600">
                 <li>Loss of data or files</li>
