@@ -11,7 +11,7 @@ const ConvertRequestSchema = z.object({
   options: z.object({
     pageSize: z.enum(['A4', 'Letter', 'Fit']),
     orientation: z.enum(['Portrait', 'Landscape']),
-    margins: z.enum([0, 5, 10, 20]),
+    margins: z.union([z.literal(0), z.literal(5), z.literal(10), z.literal(20)]),
   }),
 });
 
