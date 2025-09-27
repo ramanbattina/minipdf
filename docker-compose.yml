@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  minipdf:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - TTL_HOURS=2
+      - MAX_CLIENT_MB=25
+      - MAX_SERVER_MB=100
+      - MAX_IMAGES_CLIENT=20
+    volumes:
+      - ./temp:/app/temp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a cleanup service for expired files
+  cleanup:
+    build: .
+    command: >
+      sh -c "
+        while true; do
+          curl -X POST http://minipdf:3000/api/cleanup || true;
+          sleep 3600;
+        done
+      "
+    depends_on:
+      - minipdf
+    restart: unless-stopped
