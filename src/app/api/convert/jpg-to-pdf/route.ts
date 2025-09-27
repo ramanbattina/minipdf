@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Return PDF as stream
-      return new NextResponse(pdfBytes, {
+      return new NextResponse(pdfBytes.buffer, {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
