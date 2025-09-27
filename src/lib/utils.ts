@@ -41,22 +41,3 @@ export function calculateTotalSize(files: File[]): number {
 export function isClientMode(totalSize: number, maxClientMB: number): boolean {
   return totalSize <= maxClientMB * 1024 * 1024;
 }
-
-export function generateId(): string {
-  return Math.random().toString(36).substr(2, 9);
-}
-
-export function validateImageFile(file: File): { valid: boolean; error?: string } {
-  const maxSize = 10 * 1024 * 1024; // 10MB per image
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  
-  if (!allowedTypes.includes(file.type)) {
-    return { valid: false, error: 'Only JPG and PNG files are allowed' };
-  }
-  
-  if (file.size > maxSize) {
-    return { valid: false, error: 'File size must be less than 10MB' };
-  }
-  
-  return { valid: true };
-}
