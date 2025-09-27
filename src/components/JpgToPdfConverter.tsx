@@ -77,7 +77,7 @@ export default function JpgToPdfConverter() {
         
         const result: ConversionResult = {
           success: true,
-          pdfBlob: new Blob([pdfBytes], { type: 'application/pdf' }),
+          pdfBlob: new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' }),
           fileName,
           fileSize: pdfBytes.length,
         };

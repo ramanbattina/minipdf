@@ -16,7 +16,7 @@ interface DropzoneProps {
 export default function Dropzone({ onFilesAdded, maxFiles = 20, disabled = false }: DropzoneProps) {
   const [errors, setErrors] = useState<string[]>([]);
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { file: File; errors: { code: string; message: string }[] }[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { file: File; errors: readonly { code: string; message: string }[] }[]) => {
     setErrors([]);
     const newErrors: string[] = [];
     const validFiles: ImageFile[] = [];

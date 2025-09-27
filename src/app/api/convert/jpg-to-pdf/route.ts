@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Return PDF as stream
-      return new NextResponse(pdfBytes.buffer, {
+      return new NextResponse(new Uint8Array(pdfBytes), {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ 
         error: 'Invalid request data',
-        details: error.errors 
+        details: error.issues 
       }, { status: 400 });
     }
 

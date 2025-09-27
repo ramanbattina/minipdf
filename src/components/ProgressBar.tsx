@@ -63,8 +63,7 @@ export default function ProgressBar({ progress, status, message, error }: Progre
             'text-sm font-medium',
             status === 'processing' && 'text-blue-600',
             status === 'success' && 'text-green-600',
-            status === 'error' && 'text-red-600',
-            status === 'idle' && 'text-gray-600'
+            status === 'error' && 'text-red-600'
           )}>
             {getStatusText()}
           </span>

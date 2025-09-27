@@ -90,7 +90,7 @@ export async function generatePDFClient(
 }
 
 export function downloadPDF(pdfBytes: Uint8Array, fileName: string): void {
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   
   const link = document.createElement('a');
