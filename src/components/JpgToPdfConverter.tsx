@@ -15,6 +15,8 @@ const DEFAULT_OPTIONS: PDFOptions = {
   pageSize: 'A4',
   orientation: 'Portrait',
   margins: 5,
+  quality: 85,
+  maxDPI: 200,
 };
 
 export default function JpgToPdfConverter() {

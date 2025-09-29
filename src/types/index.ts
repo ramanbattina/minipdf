@@ -10,6 +10,10 @@ export interface PDFOptions {
   pageSize: 'A4' | 'Letter' | 'Fit';
   orientation: 'Portrait' | 'Landscape';
   margins: 0 | 5 | 10 | 20; // in mm
+  // JPEG quality (1-100). Lower reduces size; 75-85 is a good balance
+  quality?: number;
+  // Maximum rendered DPI on page. Used to downscale large images before embedding
+  maxDPI?: number;
 }
 
 export interface ConversionResult {

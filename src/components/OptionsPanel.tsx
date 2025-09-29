@@ -22,6 +22,16 @@ export default function OptionsPanel({ options, onOptionsChange, disabled = fals
     onOptionsChange({ ...options, margins });
   };
 
+  const handleQualityChange = (quality: number) => {
+    const clamped = Math.max(1, Math.min(100, Math.round(quality)));
+    onOptionsChange({ ...options, quality: clamped });
+  };
+
+  const handleMaxDPIChange = (maxDPI: number) => {
+    const clamped = Math.max(72, Math.min(600, Math.round(maxDPI)));
+    onOptionsChange({ ...options, maxDPI: clamped });
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
       <div className="flex items-center space-x-2">
@@ -128,6 +138,48 @@ export default function OptionsPanel({ options, onOptionsChange, disabled = fals
         </p>
       </div>
 
+      {/* Compression */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">Image Quality</label>
+        </div>
+        <div className="flex items-center space-x-3">
+          <input
+            type="range"
+            min={40}
+            max={95}
+            step={1}
+            value={options.quality ?? 85}
+            onChange={(e) => handleQualityChange(Number(e.target.value))}
+            disabled={disabled}
+            className="w-full"
+          />
+          <span className="text-sm text-gray-700 w-10 text-right">{options.quality ?? 85}</span>
+        </div>
+        <p className="text-xs text-gray-500">Lower quality reduces file size. 75–85 is a good balance.</p>
+      </div>
+
+      {/* Max DPI */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">Max DPI</label>
+        </div>
+        <div className="flex items-center space-x-3">
+          <input
+            type="number"
+            min={72}
+            max={600}
+            step={1}
+            value={options.maxDPI ?? 200}
+            onChange={(e) => handleMaxDPIChange(Number(e.target.value))}
+            disabled={disabled}
+            className="w-24 px-2 py-1 border border-gray-300 rounded-md"
+          />
+          <span className="text-sm text-gray-600">pixels per inch</span>
+        </div>
+        <p className="text-xs text-gray-500">Images will be downscaled to fit this DPI on the page.</p>
+      </div>
+
       {/* Summary */}
       <div className="bg-gray-50 rounded-md p-3">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Summary</h4>
@@ -135,6 +187,8 @@ export default function OptionsPanel({ options, onOptionsChange, disabled = fals
           <p>• Page Size: {options.pageSize === 'Fit' ? 'Fit to Image' : options.pageSize}</p>
           <p>• Orientation: {options.orientation}</p>
           <p>• Margins: {options.margins}mm</p>
+            <p>• Quality: {options.quality ?? 85}</p>
+            <p>• Max DPI: {options.maxDPI ?? 200}</p>
         </div>
       </div>
     </div>

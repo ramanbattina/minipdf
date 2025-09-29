@@ -22,41 +22,63 @@ export async function generatePDFClient(
       page = pdfDoc.addPage([width, height]);
     }
 
-    // Get image data
-    const imageBytes = await image.file.arrayBuffer();
-    let pdfImage;
-    
-    try {
-      // Try to embed as JPEG first
-      pdfImage = await pdfDoc.embedJpg(imageBytes);
-    } catch {
-      try {
-        // Fallback to PNG
-        pdfImage = await pdfDoc.embedPng(imageBytes);
-      } catch (error) {
-        console.error('Failed to embed image:', error);
-        throw new Error(`Failed to process image: ${image.name}`);
-      }
-    }
-
-    // Calculate dimensions
+    // Compute page metrics for target DPI scaling
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     const margin = MARGINS[options.margins];
-    
     const availableWidth = pageWidth - (margin * 2);
     const availableHeight = pageHeight - (margin * 2);
 
-    let imageWidth = pdfImage.width;
-    let imageHeight = pdfImage.height;
+    // Load image into an HTMLImageElement
+    const arrayBuffer = await image.file.arrayBuffer();
+    const imgBlob = new Blob([arrayBuffer]);
+    const imgUrl = URL.createObjectURL(imgBlob);
+    const htmlImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = (e) => reject(e);
+      el.src = imgUrl;
+    });
 
-    // Scale image to fit within margins
-    const scaleX = availableWidth / imageWidth;
-    const scaleY = availableHeight / imageHeight;
-    const scale = Math.min(scaleX, scaleY);
+    const originalPixelWidth = htmlImg.naturalWidth || htmlImg.width;
+    const originalPixelHeight = htmlImg.naturalHeight || htmlImg.height;
 
-    imageWidth *= scale;
-    imageHeight *= scale;
+    // Determine display size in PDF points maintaining aspect ratio
+    const scaleX = availableWidth / originalPixelWidth;
+    const scaleY = availableHeight / originalPixelHeight;
+    const displayScale = Math.min(scaleX, scaleY);
+    const displayWidthPts = originalPixelWidth * displayScale;
+    const displayHeightPts = originalPixelHeight * displayScale;
+
+    // Determine target pixel resolution based on desired DPI
+    const targetDPI = options.maxDPI ?? 200; // sensible default
+    const displayWidthInches = displayWidthPts / 72;
+    const displayHeightInches = displayHeightPts / 72;
+    const targetPixelWidth = Math.max(1, Math.round(displayWidthInches * targetDPI));
+    const targetPixelHeight = Math.max(1, Math.round(displayHeightInches * targetDPI));
+
+    // Render to canvas at target size then export JPEG with quality
+    const canvas = document.createElement('canvas');
+    canvas.width = targetPixelWidth;
+    canvas.height = targetPixelHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas not supported');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(htmlImg, 0, 0, targetPixelWidth, targetPixelHeight);
+    const quality = Math.min(0.99, Math.max(0.4, (options.quality ?? 85) / 100));
+    const compressedBlob: Blob = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b as Blob), 'image/jpeg', quality)
+    );
+    URL.revokeObjectURL(imgUrl);
+    const compressedBytes = new Uint8Array(await compressedBlob.arrayBuffer());
+
+    // Embed compressed JPEG into PDF
+    const pdfImage = await pdfDoc.embedJpg(compressedBytes);
+
+    // Use precalculated display size in points
+    const imageWidth = displayWidthPts;
+    const imageHeight = displayHeightPts;
 
     // Center the image
     const x = margin + (availableWidth - imageWidth) / 2;
@@ -83,7 +105,11 @@ export async function generatePDFClient(
     }
   }
 
-  const pdfBytes = await pdfDoc.save();
+  // Use objectStreams: 'generate' for smaller PDFs and no additional metadata
+  const pdfBytes = await pdfDoc.save({
+    useObjectStreams: true,
+    addDefaultPage: false,
+  });
   const fileName = `converted-images-${new Date().toISOString().split('T')[0]}.pdf`;
 
   return { pdfBytes, fileName };

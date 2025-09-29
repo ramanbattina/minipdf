@@ -12,6 +12,8 @@ const ConvertRequestSchema = z.object({
     pageSize: z.enum(['A4', 'Letter', 'Fit']),
     orientation: z.enum(['Portrait', 'Landscape']),
     margins: z.union([z.literal(0), z.literal(5), z.literal(10), z.literal(20)]),
+    quality: z.number().min(40).max(95).optional(),
+    maxDPI: z.number().min(72).max(600).optional(),
   }),
 });
 
@@ -80,16 +82,10 @@ export async function POST(request: NextRequest) {
         try {
           // Normalize image with Sharp
           const imageBuffer = await file.arrayBuffer();
-          const processedBuffer = await sharp(Buffer.from(imageBuffer))
-            .jpeg({ quality: 90, progressive: true })
-            .toBuffer();
+          const input = Buffer.from(imageBuffer);
 
-          await writeFile(tempPath, processedBuffer);
-          processedImages.push(tempPath);
-
-          // Create PDF page
+          // Create PDF page first to compute display size for DPI-based resize
           let page;
-          
           if (validatedOptions.pageSize === 'Fit') {
             page = pdfDoc.addPage([PAGE_SIZES.A4.width, PAGE_SIZES.A4.height]);
           } else {
@@ -99,36 +95,46 @@ export async function POST(request: NextRequest) {
             page = pdfDoc.addPage([width, height]);
           }
 
-          // Get image metadata
-          const imageMetadata = await sharp(processedBuffer).metadata();
-          const imageWidth = imageMetadata.width || 0;
-          const imageHeight = imageMetadata.height || 0;
+          const margin = MARGINS[validatedOptions.margins];
+          const pageWidth = page.getWidth();
+          const pageHeight = page.getHeight();
+          const availableWidth = pageWidth - margin * 2;
+          const availableHeight = pageHeight - margin * 2;
 
-          if (imageWidth === 0 || imageHeight === 0) {
-            throw new Error(`Invalid image dimensions for ${file.name}`);
-          }
+          const meta = await sharp(input).metadata();
+          const srcW = meta.width || 0; const srcH = meta.height || 0;
+          if (!srcW || !srcH) throw new Error(`Invalid image dimensions for ${file.name}`);
+
+          // Compute displayed size in points
+          const scaleX = availableWidth / srcW;
+          const scaleY = availableHeight / srcH;
+          const displayScale = Math.min(scaleX, scaleY);
+          const displayWidthPts = srcW * displayScale;
+          const displayHeightPts = srcH * displayScale;
+
+          // Use requested DPI (default 200) to compute target pixel size
+          const targetDPI = validatedOptions.maxDPI ?? 200;
+          const displayWidthIn = displayWidthPts / 72;
+          const displayHeightIn = displayHeightPts / 72;
+          const targetW = Math.max(1, Math.round(displayWidthIn * targetDPI));
+          const targetH = Math.max(1, Math.round(displayHeightIn * targetDPI));
+
+          const jpegQuality = validatedOptions.quality ?? 85;
+
+          const processedBuffer = await sharp(input)
+            .resize({ width: targetW, height: targetH, fit: 'fill' })
+            .jpeg({ quality: jpegQuality, progressive: true, mozjpeg: true })
+            .toBuffer();
+
+          await writeFile(tempPath, processedBuffer);
+          processedImages.push(tempPath);
 
           // Embed image
           const pdfImage = await pdfDoc.embedJpg(processedBuffer);
 
-          // Calculate dimensions
-          const pageWidth = page.getWidth();
-          const pageHeight = page.getHeight();
-          const margin = MARGINS[validatedOptions.margins];
-          
-          const availableWidth = pageWidth - (margin * 2);
-          const availableHeight = pageHeight - (margin * 2);
-
-          let scaledWidth = imageWidth;
-          let scaledHeight = imageHeight;
-
-          // Scale image to fit within margins
-          const scaleX = availableWidth / imageWidth;
-          const scaleY = availableHeight / imageHeight;
-          const scale = Math.min(scaleX, scaleY);
-
-          scaledWidth *= scale;
-          scaledHeight *= scale;
+          // Use previously computed display size
+          let scaledWidth = displayWidthPts;
+          let scaledHeight = displayHeightPts;
 
           // Center the image
           const x = margin + (availableWidth - scaledWidth) / 2;
@@ -159,8 +165,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Generate PDF
-      const pdfBytes = await pdfDoc.save();
+      // Generate PDF with object streams for better compression
+      const pdfBytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
       const fileName = `converted-images-${new Date().toISOString().split('T')[0]}.pdf`;
 
       // Clean up temp files
