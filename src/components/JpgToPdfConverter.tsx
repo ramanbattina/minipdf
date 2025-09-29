@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Download, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Download, FileText, AlertCircle, CheckCircle, Zap } from 'lucide-react';
 import Dropzone from './Dropzone';
 import ThumbnailList from './ThumbnailList';
 import OptionsPanel from './OptionsPanel';
@@ -53,7 +53,7 @@ export default function JpgToPdfConverter() {
     setConversionResult(null);
   }, []);
 
-  const handleConvert = async () => {
+  const runConvert = async (override?: Partial<PDFOptions>) => {
     if (images.length === 0) return;
 
     setIsConverting(true);
@@ -61,6 +61,7 @@ export default function JpgToPdfConverter() {
     setConversionResult(null);
 
     try {
+      const effectiveOptions: PDFOptions = { ...options, ...(override || {}) } as PDFOptions;
       const totalSize = calculateTotalSize(images.map(img => img.file));
       const useClientMode = isClientMode(totalSize, maxClientMB);
 
@@ -68,7 +69,7 @@ export default function JpgToPdfConverter() {
         // Client-side conversion
         setProgress(10);
         
-        const { pdfBytes, fileName } = await generatePDFClient(images, options);
+        const { pdfBytes, fileName } = await generatePDFClient(images, effectiveOptions);
         
         setProgress(90);
         
@@ -93,7 +94,7 @@ export default function JpgToPdfConverter() {
         images.forEach((image, index) => {
           formData.append(`image_${index}`, image.file);
         });
-        formData.append('options', JSON.stringify(options));
+        formData.append('options', JSON.stringify(effectiveOptions));
 
         const response = await fetch('/api/convert/jpg-to-pdf', {
           method: 'POST',
@@ -134,6 +135,9 @@ export default function JpgToPdfConverter() {
     }
   };
 
+  const handleConvert = async () => runConvert();
+  const handleQuickConvert = async () => runConvert(DEFAULT_OPTIONS);
+
   const handleDownload = () => {
     if (conversionResult?.success && conversionResult.pdfBlob) {
       const url = URL.createObjectURL(conversionResult.pdfBlob);
@@ -160,7 +164,7 @@ export default function JpgToPdfConverter() {
   const useClientMode = isClientMode(totalSize, maxClientMB);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="max-w-6xl mx-auto p-6 pb-28 space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold text-gray-900">JPG to PDF Converter</h1>
@@ -253,6 +257,23 @@ export default function JpgToPdfConverter() {
               </span>
             </button>
 
+            {/* Quick Convert */}
+            <button
+              onClick={handleQuickConvert}
+              disabled={images.length === 0 || isConverting}
+              className={cn(
+                'w-full py-2 px-4 rounded-lg font-medium transition-colors',
+                images.length === 0 || isConverting
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              )}
+            >
+              <span className="inline-flex items-center space-x-2">
+                <Zap className="w-4 h-4" />
+                <span>Quick convert (use defaults)</span>
+              </span>
+            </button>
+
             {/* Progress Bar */}
             {isConverting && (
               <ProgressBar
@@ -311,6 +332,38 @@ export default function JpgToPdfConverter() {
           </div>
         </div>
       </div>
+      {/* Fixed Bottom Convert Bar */}
+      {images.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-gray-200">
+          <div className="max-w-6xl mx-auto p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div className="text-sm text-gray-700">
+              {images.length} image{images.length !== 1 ? 's' : ''} • {formatFileSize(totalSize)}
+            </div>
+            <div className="flex gap-3 w-full sm:w-auto">
+              <button
+                onClick={handleQuickConvert}
+                disabled={isConverting}
+                className={cn(
+                  'flex-1 sm:flex-none px-4 py-2 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 transition-colors',
+                  isConverting && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                Quick convert
+              </button>
+              <button
+                onClick={handleConvert}
+                disabled={isConverting}
+                className={cn(
+                  'flex-1 sm:flex-none px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors font-medium',
+                  isConverting && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                {isConverting ? 'Converting…' : 'Convert to PDF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

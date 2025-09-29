@@ -2,6 +2,7 @@
 
 import { PDFOptions } from '@/types';
 import { Settings, FileText, RotateCw, Ruler } from 'lucide-react';
+import { useState } from 'react';
 
 interface OptionsPanelProps {
   options: PDFOptions;
@@ -10,6 +11,7 @@ interface OptionsPanelProps {
 }
 
 export default function OptionsPanel({ options, onOptionsChange, disabled = false }: OptionsPanelProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const handlePageSizeChange = (pageSize: PDFOptions['pageSize']) => {
     onOptionsChange({ ...options, pageSize });
   };
@@ -30,6 +32,16 @@ export default function OptionsPanel({ options, onOptionsChange, disabled = fals
   const handleMaxDPIChange = (maxDPI: number) => {
     const clamped = Math.max(72, Math.min(600, Math.round(maxDPI)));
     onOptionsChange({ ...options, maxDPI: clamped });
+  };
+
+  const applyPreset = (preset: 'smallest' | 'balanced' | 'best') => {
+    if (preset === 'smallest') {
+      onOptionsChange({ ...options, quality: 75, maxDPI: 150 });
+    } else if (preset === 'balanced') {
+      onOptionsChange({ ...options, quality: 85, maxDPI: 200 });
+    } else {
+      onOptionsChange({ ...options, quality: 92, maxDPI: 300 });
+    }
   };
 
   return (
@@ -138,57 +150,99 @@ export default function OptionsPanel({ options, onOptionsChange, disabled = fals
         </p>
       </div>
 
-      {/* Compression */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-gray-700">Image Quality</label>
-        </div>
-        <div className="flex items-center space-x-3">
-          <input
-            type="range"
-            min={40}
-            max={95}
-            step={1}
-            value={options.quality ?? 85}
-            onChange={(e) => handleQualityChange(Number(e.target.value))}
-            disabled={disabled}
-            className="w-full"
-          />
-          <span className="text-sm text-gray-700 w-10 text-right">{options.quality ?? 85}</span>
-        </div>
-        <p className="text-xs text-gray-500">Lower quality reduces file size. 75–85 is a good balance.</p>
-      </div>
+      {/* Advanced */}
+      <div className="pt-2 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(v => !v)}
+          className={`w-full text-left text-sm font-medium ${showAdvanced ? 'text-blue-700' : 'text-gray-700'} flex items-center justify-between`}
+          disabled={disabled}
+        >
+          <span>Advanced</span>
+          <span className="text-xs">{showAdvanced ? 'Hide' : 'Show'}</span>
+        </button>
 
-      {/* Max DPI */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-gray-700">Max DPI</label>
-        </div>
-        <div className="flex items-center space-x-3">
-          <input
-            type="number"
-            min={72}
-            max={600}
-            step={1}
-            value={options.maxDPI ?? 200}
-            onChange={(e) => handleMaxDPIChange(Number(e.target.value))}
-            disabled={disabled}
-            className="w-24 px-2 py-1 border border-gray-300 rounded-md"
-          />
-          <span className="text-sm text-gray-600">pixels per inch</span>
-        </div>
-        <p className="text-xs text-gray-500">Images will be downscaled to fit this DPI on the page.</p>
+        {showAdvanced && (
+          <div className="mt-4 space-y-4">
+            {/* Presets */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Presets</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyPreset('smallest')}
+                  disabled={disabled}
+                  className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+                >Smallest</button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset('balanced')}
+                  disabled={disabled}
+                  className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+                >Balanced</button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset('best')}
+                  disabled={disabled}
+                  className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+                >Best quality</button>
+              </div>
+            </div>
+
+            {/* Compression */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Image quality</label>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="range"
+                  min={40}
+                  max={95}
+                  step={1}
+                  value={options.quality ?? 85}
+                  onChange={(e) => handleQualityChange(Number(e.target.value))}
+                  disabled={disabled}
+                  className="w-full"
+                />
+                <span className="text-sm text-gray-700 w-10 text-right">{options.quality ?? 85}</span>
+              </div>
+              <p className="text-xs text-gray-500">Lower = smaller PDF. 75–85 is a good balance.</p>
+            </div>
+
+            {/* Max DPI */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Max DPI</label>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="number"
+                  min={72}
+                  max={600}
+                  step={1}
+                  value={options.maxDPI ?? 200}
+                  onChange={(e) => handleMaxDPIChange(Number(e.target.value))}
+                  disabled={disabled}
+                  className="w-24 px-2 py-1 border border-gray-300 rounded-md"
+                />
+                <span className="text-sm text-gray-600">pixels/inch</span>
+              </div>
+              <p className="text-xs text-gray-500">Images are downscaled to this resolution on the page.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Summary */}
       <div className="bg-gray-50 rounded-md p-3">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Summary</h4>
         <div className="text-xs text-gray-600 space-y-1">
-          <p>• Page Size: {options.pageSize === 'Fit' ? 'Fit to Image' : options.pageSize}</p>
+          <p>• Page size: {options.pageSize === 'Fit' ? 'Fit to Image' : options.pageSize}</p>
           <p>• Orientation: {options.orientation}</p>
-          <p>• Margins: {options.margins}mm</p>
-            <p>• Quality: {options.quality ?? 85}</p>
-            <p>• Max DPI: {options.maxDPI ?? 200}</p>
+          <p>• Margin: {options.margins}mm</p>
+          {showAdvanced && (
+            <>
+              <p>• Quality: {options.quality ?? 85}</p>
+              <p>• Max DPI: {options.maxDPI ?? 200}</p>
+            </>
+          )}
         </div>
       </div>
     </div>
