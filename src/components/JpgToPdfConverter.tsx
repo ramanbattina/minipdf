@@ -165,23 +165,27 @@ export default function JpgToPdfConverter() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 pb-28 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">JPG to PDF Converter</h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Convert your images into a single PDF document. Drag to reorder, customize settings, and download instantly.
-        </p>
-      </div>
+      {/* Header (hidden after upload to keep UI minimal) */}
+      {images.length === 0 && (
+        <>
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900">JPG to PDF Converter</h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Convert your images into a single PDF document. Drag to reorder, customize settings, and download instantly.
+            </p>
+          </div>
 
-      {/* Privacy Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center space-x-2">
-          <CheckCircle className="w-5 h-5 text-blue-600" />
-          <p className="text-sm text-blue-800">
-            <strong>Privacy First:</strong> Your files are processed locally when possible and automatically deleted after 2 hours.
-          </p>
-        </div>
-      </div>
+          {/* Privacy Notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-blue-600" />
+              <p className="text-sm text-blue-800">
+                <strong>Privacy First:</strong> Your files are processed locally when possible and automatically deleted after 2 hours.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -230,7 +234,7 @@ export default function JpgToPdfConverter() {
         </div>
 
         {/* Right Column - Options and Actions */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-4">
           {/* Options Panel */}
           <OptionsPanel
             options={options}
