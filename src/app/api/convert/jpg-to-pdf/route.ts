@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
           const pdfImage = await pdfDoc.embedJpg(processedBuffer);
 
           // Use previously computed display size
-          let scaledWidth = displayWidthPts;
-          let scaledHeight = displayHeightPts;
+          const scaledWidth = displayWidthPts;
+          const scaledHeight = displayHeightPts;
 
           // Center the image
           const x = margin + (availableWidth - scaledWidth) / 2;
